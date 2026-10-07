@@ -105,3 +105,31 @@ async def test_search_service_rejects_rate_limited_client() -> None:
     await service.search(request, rate_limit_key="client-1")
     with pytest.raises(RuntimeError, match="rate limit"):
         await service.search(request, rate_limit_key="client-1", no_cache=True)
+
+
+@pytest.mark.asyncio
+async def test_search_service_rejects_unresolved_browser_challenge() -> None:
+    class ChallengedTransport(FakeTransport):
+        async def fetch(self, request: TransportRequest) -> TransportResult:
+            return TransportResult(
+                status_code=429,
+                headers={},
+                raw_html="captcha",
+                response_time_ms=1.0,
+                escalation_required=True,
+            )
+
+    class UnresolvedEscalator:
+        async def execute(self, request):
+            return EscalationResult(
+                rendered_html="captcha",
+                final_url="https://www.google.com/sorry/index",
+                execution_duration_ms=100.0,
+                challenge_type_encountered=ChallengeType.HARD_CAPTCHA,
+                resolved_successfully=False,
+            )
+
+    service = SearchService(transport=ChallengedTransport(), escalator=UnresolvedEscalator())
+
+    with pytest.raises(RuntimeError, match="did not resolve"):
+        await service.search(TransportRequest(query="captcha"))

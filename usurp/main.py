@@ -1,38 +1,83 @@
-from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
+from pathlib import Path
 
-app = FastAPI(title="usurp - SERP Extraction Engine (scaffold)")
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, ConfigDict, Field
+
+from usurp.service import SearchService
+from usurp.transport import DeviceType, FastPathTransport, TransportRequest
+
+app = FastAPI(title="usurp - SERP Extraction Engine")
 
 
 class SearchQuery(BaseModel):
-    q: str
-    gl: str | None = "us"
-    hl: str | None = "en"
-    start: int | None = 0
-    num: int | None = 10
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    q: str = Field(min_length=1, max_length=2048)
+    gl: str = Field(default="us", min_length=2, max_length=2)
+    hl: str = Field(default="en", min_length=2, max_length=8)
+    start: int = Field(default=0, ge=0)
+    num: int = Field(default=10, ge=1, le=100)
+    device: DeviceType = DeviceType.DESKTOP
     api_key: str | None = None
+    no_cache: bool = False
 
 
 async def get_query(
     q: str | None = None,
-    gl: str | None = "us",
-    hl: str | None = "en",
+    gl: str = "us",
+    hl: str = "en",
     start: int = 0,
     num: int = 10,
+    device: DeviceType = DeviceType.DESKTOP,
     api_key: str | None = None,
+    no_cache: bool = False,
 ) -> SearchQuery | None:
     if q is None:
         return None
-    return SearchQuery(q=q, gl=gl, hl=hl, start=start, num=num, api_key=api_key)
+    return SearchQuery(
+        q=q,
+        gl=gl,
+        hl=hl,
+        start=start,
+        num=num,
+        device=device,
+        api_key=api_key,
+        no_cache=no_cache,
+    )
+
+
+def get_service() -> SearchService:
+    return SearchService(
+        transport=FastPathTransport(),
+        cache_path=Path.home() / ".cache" / "usurp" / "serp.sqlite3",
+    )
+
+
+@app.get("/health")
+async def health() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.get("/search")
-async def search(query: SearchQuery | None = Depends(get_query)) -> dict[str, object]:  # noqa: B008
+@app.get("/v1/search")
+async def search(
+    query: SearchQuery | None = Depends(get_query),  # noqa: B008
+    service: SearchService = Depends(get_service),  # noqa: B008
+) -> dict[str, object]:
     if query is None:
         raise HTTPException(status_code=400, detail="missing query parameters")
-    # scaffold: return a strict SerpApi-like minimal response
-    return {
-        "search_metadata": {"query": query.q},
-        "organic_results": [],
-        "pagination": {},
-    }
+    try:
+        response = await service.search(
+            TransportRequest(
+                query=query.q,
+                country_code=query.gl,
+                language_code=query.hl,
+                start_offset=query.start,
+                num_results=query.num,
+                device_type=query.device,
+            ),
+            no_cache=query.no_cache,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return response.model_dump(mode="json")

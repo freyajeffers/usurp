@@ -10,10 +10,10 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.cache`: asynchronous SQLite WAL cache with canonical parameter hashing and TTL expiry.
 - `usurp.rate_limit`: async token-bucket rate limiter for client/proxy keys.
 - `usurp.service`: transport → escalation check → parser → cache orchestration.
-- `usurp.main:app`: minimal ASGI endpoint with a SerpApi-shaped response shell.
+- `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
-The transport client, proxy pool, parser, cache, and production authentication are not implemented yet.
+Browser execution, full SERP feature extraction, production authentication, rate-limit wiring, and systemd packaging are not implemented yet.
 
 ## Commands
 

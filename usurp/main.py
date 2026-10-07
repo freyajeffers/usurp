@@ -5,6 +5,7 @@ from secrets import compare_digest
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from usurp.browser import PlaywrightEscalator
 from usurp.service import SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
 
@@ -52,6 +53,7 @@ def get_service() -> SearchService:
     return SearchService(
         transport=FastPathTransport(),
         cache_path=Path.home() / ".cache" / "usurp" / "serp.sqlite3",
+        escalator=PlaywrightEscalator(),
     )
 
 

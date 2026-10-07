@@ -1,5 +1,6 @@
 import pytest
 
+from usurp.browser import ChallengeType, EscalationResult
 from usurp.service import SearchService
 from usurp.transport import TransportRequest, TransportResult
 
@@ -48,3 +49,41 @@ async def test_search_service_rejects_transport_escalation() -> None:
 
     with pytest.raises(RuntimeError, match="escalation"):
         await service.search(TransportRequest(query="blocked"))
+
+
+@pytest.mark.asyncio
+async def test_search_service_escalates_challenged_transport() -> None:
+    class ChallengedTransport(FakeTransport):
+        async def fetch(self, request: TransportRequest) -> TransportResult:
+            return TransportResult(
+                status_code=429,
+                headers={},
+                raw_html="captcha",
+                response_time_ms=1.0,
+                escalation_required=True,
+            )
+
+    class FakeEscalator:
+        def __init__(self) -> None:
+            self.request = None
+
+        async def execute(self, request):
+            self.request = request
+            return EscalationResult(
+                rendered_html='<div class="MjjYud"><a href="https://example.test"><h3>Rendered</h3></a></div>',
+                final_url="https://www.google.com/search?q=blocked",
+                execution_duration_ms=25.0,
+                challenge_type_encountered=ChallengeType.NONE,
+                resolved_successfully=True,
+            )
+
+    escalator = FakeEscalator()
+    service = SearchService(transport=ChallengedTransport(), escalator=escalator)
+
+    response = await service.search(TransportRequest(query="blocked"))
+
+    assert response.organic_results[0].title == "Rendered"
+    assert escalator.request is not None
+    assert str(escalator.request.target_url) == (
+        "https://www.google.com/search?q=blocked&gl=us&hl=en&start=0&num=10&device=desktop"
+    )

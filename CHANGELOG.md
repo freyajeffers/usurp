@@ -23,5 +23,6 @@ All notable changes to usurp are documented here.
 - Replaced the placeholder API with `/search`, `/v1/search`, and `/health` endpoints backed by dependency-injected search services.
 - Added optional constant-time API-key enforcement through `USURP_API_KEY`.
 - Added bounded Playwright browser escalation execution with proxy support, viewport/user-agent settings, consent-button handling, cleanup, and challenge result reporting.
+- Integrated browser escalation into `SearchService` and the default FastAPI service dependency.
 
-Not implemented yet: full SERP feature extraction, rate-limit wiring, browser escalation integration into `SearchService`, and systemd packaging.
+Not implemented yet: full SERP feature extraction, rate-limit wiring, and systemd packaging.

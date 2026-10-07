@@ -24,5 +24,6 @@ All notable changes to usurp are documented here.
 - Added optional constant-time API-key enforcement through `USURP_API_KEY`.
 - Added bounded Playwright browser escalation execution with proxy support, viewport/user-agent settings, consent-button handling, cleanup, and challenge result reporting.
 - Integrated browser escalation into `SearchService` and the default FastAPI service dependency.
+- Wired token-bucket rate limiting into `SearchService` and the REST API with per-client keys and HTTP 429 responses.
 
-Not implemented yet: full SERP feature extraction, rate-limit wiring, and systemd packaging.
+Not implemented yet: full SERP feature extraction and systemd packaging.

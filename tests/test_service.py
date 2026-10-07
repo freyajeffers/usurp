@@ -1,6 +1,7 @@
 import pytest
 
 from usurp.browser import ChallengeType, EscalationResult
+from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
 from usurp.service import SearchService
 from usurp.transport import TransportRequest, TransportResult
 
@@ -87,3 +88,20 @@ async def test_search_service_escalates_challenged_transport() -> None:
     assert str(escalator.request.target_url) == (
         "https://www.google.com/search?q=blocked&gl=us&hl=en&start=0&num=10&device=desktop"
     )
+
+
+@pytest.mark.asyncio
+async def test_search_service_rejects_rate_limited_client() -> None:
+    limiter = TokenBucketRateLimiter(
+        RateLimitPolicy(
+            max_requests_per_minute=1,
+            burst_capacity=1,
+            per_proxy_delay_seconds=0.0,
+        )
+    )
+    service = SearchService(transport=FakeTransport(), rate_limiter=limiter)
+    request = TransportRequest(query="limited")
+
+    await service.search(request, rate_limit_key="client-1")
+    with pytest.raises(RuntimeError, match="rate limit"):
+        await service.search(request, rate_limit_key="client-1", no_cache=True)

@@ -6,7 +6,13 @@ from usurp.parser import parse_serp_html
 
 
 class FakeService:
-    async def search(self, request: object, *, no_cache: bool = False) -> object:
+    async def search(
+        self,
+        request: object,
+        *,
+        no_cache: bool = False,
+        rate_limit_key: str = "anonymous",
+    ) -> object:
         return parse_serp_html("<div id='search'></div>", query="test")
 
 

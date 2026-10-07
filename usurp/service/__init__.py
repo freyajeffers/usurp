@@ -19,6 +19,14 @@ class BrowserEscalatorProtocol(Protocol):
     def execute(self, request: EscalationRequest) -> Awaitable[EscalationResult]: ...
 
 
+class RateLimiterProtocol(Protocol):
+    def acquire(self, key: str) -> Awaitable[bool]: ...
+
+
+class RateLimitExceededError(RuntimeError):
+    """Raised when a client has exhausted its configured request budget."""
+
+
 class SearchService:
     """Coordinates transport, challenge detection, parsing, and optional caching."""
 
@@ -29,12 +37,22 @@ class SearchService:
         cache_path: Path | None = None,
         cache_factory: Callable[[Path], SQLiteSerpCache] = SQLiteSerpCache,
         escalator: BrowserEscalatorProtocol | None = None,
+        rate_limiter: RateLimiterProtocol | None = None,
     ) -> None:
         self._transport = transport
         self._escalator = escalator
+        self._rate_limiter = rate_limiter
         self._cache = cache_factory(cache_path) if cache_path is not None else None
 
-    async def search(self, request: TransportRequest, *, no_cache: bool = False) -> SerpApiResponse:
+    async def search(
+        self,
+        request: TransportRequest,
+        *,
+        no_cache: bool = False,
+        rate_limit_key: str = "anonymous",
+    ) -> SerpApiResponse:
+        if self._rate_limiter is not None and not await self._rate_limiter.acquire(rate_limit_key):
+            raise RateLimitExceededError("rate limit exceeded")
         parameters = {
             "q": request.query,
             "gl": request.country_code,
@@ -92,4 +110,4 @@ class SearchService:
         )
 
 
-__all__ = ["SearchService"]
+__all__ = ["RateLimitExceededError", "SearchService"]

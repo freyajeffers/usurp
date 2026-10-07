@@ -6,7 +6,8 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser import PlaywrightEscalator
-from usurp.service import SearchService
+from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
+from usurp.service import RateLimitExceededError, SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
 
 app = FastAPI(title="usurp - SERP Extraction Engine")
@@ -54,6 +55,13 @@ def get_service() -> SearchService:
         transport=FastPathTransport(),
         cache_path=Path.home() / ".cache" / "usurp" / "serp.sqlite3",
         escalator=PlaywrightEscalator(),
+        rate_limiter=TokenBucketRateLimiter(
+            RateLimitPolicy(
+                max_requests_per_minute=60,
+                burst_capacity=10,
+                per_proxy_delay_seconds=0.0,
+            )
+        ),
     )
 
 
@@ -86,7 +94,10 @@ async def search(
                 device_type=query.device,
             ),
             no_cache=query.no_cache,
+            rate_limit_key=query.api_key or "anonymous",
         )
+    except RateLimitExceededError as exc:
+        raise HTTPException(status_code=429, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return response.model_dump(mode="json")

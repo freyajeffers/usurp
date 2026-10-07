@@ -2,11 +2,13 @@ from collections.abc import Awaitable, Callable
 from pathlib import Path
 from typing import Protocol
 from urllib.parse import urlencode
+from uuid import uuid4
 
 from pydantic import HttpUrl, TypeAdapter
 
 from usurp.browser import ChallengeType, EscalationRequest, EscalationResult
 from usurp.cache import SQLiteSerpCache
+from usurp.escalation import EscalationManager
 from usurp.parser import SerpApiResponse, parse_serp_html
 from usurp.transport import TransportRequest, TransportResult
 
@@ -30,8 +32,9 @@ class RateLimitExceededError(RuntimeError):
 class BrowserChallengeError(RuntimeError):
     """Raised when an authorized browser session cannot resolve a challenge."""
 
-    def __init__(self, challenge_type: ChallengeType) -> None:
+    def __init__(self, challenge_type: ChallengeType, ticket_id: str | None = None) -> None:
         self.challenge_type = challenge_type
+        self.ticket_id = ticket_id
         super().__init__(f"browser challenge did not resolve: {challenge_type.value}")
 
 
@@ -46,10 +49,12 @@ class SearchService:
         cache_factory: Callable[[Path], SQLiteSerpCache] = SQLiteSerpCache,
         escalator: BrowserEscalatorProtocol | None = None,
         rate_limiter: RateLimiterProtocol | None = None,
+        escalation_manager: EscalationManager | None = None,
     ) -> None:
         self._transport = transport
         self._escalator = escalator
         self._rate_limiter = rate_limiter
+        self._escalation_manager = escalation_manager or EscalationManager()
         self._cache = cache_factory(cache_path) if cache_path is not None else None
 
     async def search(
@@ -81,7 +86,17 @@ class SearchService:
                 raise RuntimeError("transport requires browser escalation")
             escalation = await self._escalator.execute(self._build_escalation_request(request))
             if not escalation.resolved_successfully:
-                raise BrowserChallengeError(escalation.challenge_type_encountered)
+                # persist challenge for human-in-the-loop resolution
+                ticket_id = str(uuid4())
+                self._escalation_manager.create_ticket(
+                    ticket_id,
+                    request.query,
+                    escalation.rendered_html,
+                    metadata={"final_url": str(escalation.final_url)},
+                )
+                raise BrowserChallengeError(
+                    escalation.challenge_type_encountered, ticket_id=ticket_id
+                )
             raw_html = escalation.rendered_html
         response = parse_serp_html(
             raw_html,

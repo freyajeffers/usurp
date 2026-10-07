@@ -134,3 +134,4 @@ async def test_search_service_rejects_unresolved_browser_challenge() -> None:
     with pytest.raises(BrowserChallengeError, match="did not resolve") as exc_info:
         await service.search(TransportRequest(query="captcha"))
     assert exc_info.value.challenge_type is ChallengeType.HARD_CAPTCHA
+    assert exc_info.value.ticket_id is not None

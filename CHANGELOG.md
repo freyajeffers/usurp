@@ -31,5 +31,6 @@ All notable changes to usurp are documented here.
 - Expanded the static fixture corpus to 50 representative layouts and added an all-fixture extraction regression test.
 - Added detection for Google's `/httpservice/retry/enablejs` interstitial observed during live fast-path validation.
 - Added typed fail-closed browser challenge errors and structured HTTP 503 responses for unresolved CAPTCHA/challenge states.
+- Added local escalation tickets for authorized human-in-the-loop review and rendered-HTML submission without automated CAPTCHA bypass.
 
 Not implemented yet: production validation against captured real Google layouts.

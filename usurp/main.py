@@ -104,6 +104,7 @@ async def search(
             detail={
                 "error": "browser_challenge_unresolved",
                 "challenge_type": exc.challenge_type.value,
+                "ticket_id": exc.ticket_id,
                 "message": str(exc),
             },
         ) from exc

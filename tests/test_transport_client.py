@@ -3,7 +3,15 @@ from uuid import uuid4
 
 import pytest
 
-from usurp.transport import FastPathTransport, TransportClientSettings, TransportRequest
+from usurp.transport import (
+    DeviceType,
+    FastPathTransport,
+    ProxyNode,
+    ProxyPoolRouter,
+    ProxyProtocol,
+    TransportClientSettings,
+    TransportRequest,
+)
 
 
 class FakeSession:
@@ -79,3 +87,37 @@ async def test_fast_path_passes_proxy_and_generates_proxy_id() -> None:
     assert result.proxy_used_id == proxy_id
     assert session.calls[0]["proxy"] == "http://proxy.example.test:8080"
     assert result.escalation_required is True
+
+
+@pytest.mark.asyncio
+async def test_fast_path_selects_and_reports_to_proxy_pool() -> None:
+    node = ProxyNode(
+        id=uuid4(),
+        uri="https://proxy-us.example.test:443",
+        protocol=ProxyProtocol.HTTPS,
+        region="US",
+    )
+    pool = ProxyPoolRouter([node])
+    response = SimpleNamespace(status_code=200, headers={}, text="<html>results</html>")
+    session = FakeSession(response)
+    client = FastPathTransport(session_factory=lambda: session, proxy_pool=pool)
+
+    result = await client.fetch(TransportRequest(query="test", session_id="session-1"))
+
+    assert result.proxy_used_id == node.id
+    assert session.calls[0]["proxy"] == str(node.uri)
+    assert node.avg_latency_ms >= 0
+
+
+@pytest.mark.asyncio
+async def test_mobile_requests_include_mobile_user_agent_and_consent_cookie() -> None:
+    response = SimpleNamespace(status_code=200, headers={}, text="<html>results</html>")
+    session = FakeSession(response)
+    client = FastPathTransport(session_factory=lambda: session)
+
+    await client.fetch(TransportRequest(query="test", device_type=DeviceType.MOBILE))
+
+    headers = session.calls[0]["headers"]
+    assert isinstance(headers, dict)
+    assert "Mobile" in headers["User-Agent"]
+    assert headers["Cookie"] == "CONSENT=PENDING+987; SOCS=CAESHAgCEhJnd3NfMjAyMzAxMjAx"

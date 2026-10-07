@@ -13,5 +13,7 @@ All notable changes to usurp are documented here.
 - Updated installation documentation to use `uv sync --extra dev`.
 - Added the first Phase 1 fast-path transport client using curl-cffi browser impersonation.
 - Added request parameter construction, configurable connect/read timeouts, proxy forwarding, response timing, and anti-bot escalation markers.
+- Added a concurrency-safe proxy pool with regional selection, sticky sessions, exponential cooldowns, failover, and latency tracking.
+- Added desktop/mobile user-agent routing and consent-cookie injection to the fast path.
 
-Not implemented yet: live transport, proxy routing, browser fallback, SERP parsing, caching, authentication, and systemd packaging.
+Not implemented yet: browser fallback, SERP parsing, caching, authentication, and systemd packaging.

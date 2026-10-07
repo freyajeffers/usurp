@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser import PlaywrightEscalator
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
-from usurp.service import RateLimitExceededError, SearchService
+from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
 
 app = FastAPI(title="usurp - SERP Extraction Engine")
@@ -98,6 +98,15 @@ async def search(
         )
     except RateLimitExceededError as exc:
         raise HTTPException(status_code=429, detail=str(exc)) from exc
+    except BrowserChallengeError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "browser_challenge_unresolved",
+                "challenge_type": exc.challenge_type.value,
+                "message": str(exc),
+            },
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return response.model_dump(mode="json")

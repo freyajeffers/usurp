@@ -5,7 +5,7 @@ from urllib.parse import urlencode
 
 from pydantic import HttpUrl, TypeAdapter
 
-from usurp.browser import EscalationRequest, EscalationResult
+from usurp.browser import ChallengeType, EscalationRequest, EscalationResult
 from usurp.cache import SQLiteSerpCache
 from usurp.parser import SerpApiResponse, parse_serp_html
 from usurp.transport import TransportRequest, TransportResult
@@ -25,6 +25,14 @@ class RateLimiterProtocol(Protocol):
 
 class RateLimitExceededError(RuntimeError):
     """Raised when a client has exhausted its configured request budget."""
+
+
+class BrowserChallengeError(RuntimeError):
+    """Raised when an authorized browser session cannot resolve a challenge."""
+
+    def __init__(self, challenge_type: ChallengeType) -> None:
+        self.challenge_type = challenge_type
+        super().__init__(f"browser challenge did not resolve: {challenge_type.value}")
 
 
 class SearchService:
@@ -73,7 +81,7 @@ class SearchService:
                 raise RuntimeError("transport requires browser escalation")
             escalation = await self._escalator.execute(self._build_escalation_request(request))
             if not escalation.resolved_successfully:
-                raise RuntimeError("browser escalation did not resolve the challenge")
+                raise BrowserChallengeError(escalation.challenge_type_encountered)
             raw_html = escalation.rendered_html
         response = parse_serp_html(
             raw_html,
@@ -110,4 +118,4 @@ class SearchService:
         )
 
 
-__all__ = ["RateLimitExceededError", "SearchService"]
+__all__ = ["BrowserChallengeError", "RateLimitExceededError", "SearchService"]

@@ -2,7 +2,7 @@ import pytest
 
 from usurp.browser import ChallengeType, EscalationResult
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
-from usurp.service import SearchService
+from usurp.service import BrowserChallengeError, SearchService
 from usurp.transport import TransportRequest, TransportResult
 
 
@@ -131,5 +131,6 @@ async def test_search_service_rejects_unresolved_browser_challenge() -> None:
 
     service = SearchService(transport=ChallengedTransport(), escalator=UnresolvedEscalator())
 
-    with pytest.raises(RuntimeError, match="did not resolve"):
+    with pytest.raises(BrowserChallengeError, match="did not resolve") as exc_info:
         await service.search(TransportRequest(query="captcha"))
+    assert exc_info.value.challenge_type is ChallengeType.HARD_CAPTCHA

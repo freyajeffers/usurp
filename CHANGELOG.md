@@ -19,5 +19,6 @@ All notable changes to usurp are documented here.
 - Added the initial selectolax-based SERP parser and strict SerpApi response models for organic results and search metadata.
 - Added asynchronous SQLite WAL caching with canonical SHA-256 query keys, TTL expiry, hit counts, and required concurrency pragmas.
 - Added token-bucket rate limiting with per-key burst capacity, refill, proxy delay enforcement, and reset support.
+- Added `SearchService` orchestration for transport, challenge escalation, parsing, and optional cache hits.
 
 Not implemented yet: browser execution, full SERP feature extraction, authentication, and systemd packaging.

@@ -27,6 +27,41 @@ def test_parser_extracts_ordered_organic_results() -> None:
     assert response.search_parameters.q == "example query"
 
 
+def test_parser_extracts_knowledge_graph_questions_and_pagination() -> None:
+    html = """
+    <div id="rhs">
+      <div class="kp-wholepage">
+        <h2>Python</h2><div class="kno-rdesc">A programming language.</div>
+      </div>
+    </div>
+    <div class="related-question-pair" data-q="What is Python?"><div>Python is a language.</div></div>
+    <div id="botstuff">
+      <a href="/search?q=python+programming">python programming</a>
+      <a id="pnnext" href="/search?q=python&start=10">Next</a>
+    </div>
+    """
+
+    response = parse_serp_html(html, query="python")
+
+    assert response.knowledge_graph == {
+        "title": "Python",
+        "description": "A programming language.",
+    }
+    assert response.related_questions == [
+        {"question": "What is Python?", "answer": "Python is a language."}
+    ]
+    assert response.related_searches == [
+        {
+            "query": "python programming",
+            "link": "https://www.google.com/search?q=python+programming",
+        }
+    ]
+    assert response.pagination == {
+        "next": "https://www.google.com/search?q=python&start=10",
+        "current": 1,
+    }
+
+
 def test_parser_returns_valid_empty_response_when_no_results_exist() -> None:
     response = parse_serp_html("<html><body>No results</body></html>", query="missing")
 

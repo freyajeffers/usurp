@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from urllib.parse import urljoin
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -88,6 +89,48 @@ def parse_serp_html(
         if len(results) >= num:
             break
 
+    knowledge_graph: dict[str, object] | None = None
+    knowledge_panel = tree.css_first("#rhs .kp-wholepage") or tree.css_first(".knowledge-panel")
+    if knowledge_panel is not None:
+        title_node = knowledge_panel.css_first("h2") or knowledge_panel.css_first(
+            "[data-attrid='title']"
+        )
+        description_node = knowledge_panel.css_first(".kno-rdesc") or knowledge_panel.css_first(
+            "[data-attrid='description']"
+        )
+        knowledge_graph = {}
+        if title_node is not None:
+            knowledge_graph["title"] = title_node.text(strip=True)
+        if description_node is not None:
+            knowledge_graph["description"] = description_node.text(strip=True)
+
+    related_questions: list[dict[str, object]] = []
+    for question_node in tree.css(".related-question-pair"):
+        question = question_node.attributes.get("data-q") or ""
+        answer_node = question_node.css_first(".wDYxhc") or question_node.css_first("div")
+        answer = answer_node.text(strip=True) if answer_node is not None else ""
+        if question:
+            related_questions.append({"question": question, "answer": answer})
+
+    related_searches: list[dict[str, object]] = []
+    for link_node in tree.css("#botstuff a[href]"):
+        href = link_node.attributes.get("href") or ""
+        label = link_node.text(strip=True)
+        if (
+            not href.startswith(("/search?", "https://www.google.com/search?"))
+            or not label
+            or link_node.attributes.get("id") == "pnnext"
+        ):
+            continue
+        related_searches.append({"query": label, "link": urljoin("https://www.google.com", href)})
+
+    pagination: dict[str, object] = {"current": start // num + 1}
+    next_node = tree.css_first("#pnnext")
+    if next_node is not None:
+        next_href = next_node.attributes.get("href") or ""
+        if next_href:
+            pagination["next"] = urljoin("https://www.google.com", next_href)
+
     return SerpApiResponse(
         search_metadata=SearchMetadata(
             id=str(uuid4()),
@@ -106,7 +149,10 @@ def parse_serp_html(
             device=device,
         ),
         organic_results=results,
-        pagination={},
+        knowledge_graph=knowledge_graph,
+        related_questions=related_questions or None,
+        related_searches=related_searches or None,
+        pagination=pagination,
     )
 
 

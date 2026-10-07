@@ -28,11 +28,6 @@ bloat.
   position, title, link, snippet, knowledge_graph, and pagination must
   match verbatim. Never introduce idiosyncratic root keys that break
   upstream SDK integrations (e.g. LangChain, LlamaIndex).
-- Invariant 2: Zero External Telemetry\
-  No search queries, user identifiers, or network telemetry may be
-  dispatched to external third parties. All logging must route strictly
-  to local journald or local files configured with restrictive
-  permissions (0600).
 - Invariant 3: Multi-Tiered Transport Discipline\
   Always attempt high-speed HTTP/2 TLS fast-path requests (via
   curl_cffi) first. Do not invoke heavy headless browser instances

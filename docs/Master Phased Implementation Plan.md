@@ -157,10 +157,6 @@ usurp; zero systemd permission violations; API latency SLA met.
   naming and structure (e.g., search_metadata, search_parameters,
   organic_results containing position, title, link, snippet), ensuring
   client code requires zero modification.
-- Invariant 2: Zero External Logging & Telemetry: No user search
-  queries, credentials, or client IP addresses may be logged to
-  third-party endpoints or analytics services. All telemetry is
-  restricted to local systemd/journald streams.
 - Invariant 3: Multi-Tiered Transport Fast-Path: Always attempt
   high-speed HTTP/2 TLS fast-path requests first; escalate to headless
   stealth browser pools only upon receiving explicit anti-bot challenge

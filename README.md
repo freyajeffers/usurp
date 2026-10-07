@@ -122,7 +122,7 @@ Data Privacy & Logging
 
 All queries logged on vendor servers
 
-100% Sovereign; Zero External Telemetry
+Self-hosted deployment; configurable logging
 
 Cached Response Latency
 

@@ -49,9 +49,6 @@ offline-first microservice. It provides:
 - Invariant 1: 1:1 SerpApi Output Compatibility: All output JSON
   responses adhere strictly to SerpApi's standard schema
   (organic_results, knowledge_graph, related_questions, pagination).
-- Invariant 2: Local Sovereignty & Zero External Telemetry: No search
-  queries, user data, or telemetry leave the host. All logging routes to
-  local journald with zero external reporting.
 - Invariant 3: Multi-Tiered Transport Fast-Path: 90%+ of queries execute
   via high-speed HTTP/2 TLS fast-path requests using browser TLS
   impersonation (curl_cffi), escalating to headless stealth browser

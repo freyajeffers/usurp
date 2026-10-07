@@ -18,5 +18,6 @@ All notable changes to usurp are documented here.
 - Added strict Phase 2 escalation contracts and challenge classification for consent, JavaScript, and hard CAPTCHA interstitials.
 - Added the initial selectolax-based SERP parser and strict SerpApi response models for organic results and search metadata.
 - Added asynchronous SQLite WAL caching with canonical SHA-256 query keys, TTL expiry, hit counts, and required concurrency pragmas.
+- Added token-bucket rate limiting with per-key burst capacity, refill, proxy delay enforcement, and reset support.
 
-Not implemented yet: browser execution, full SERP feature extraction, rate limiting, authentication, and systemd packaging.
+Not implemented yet: browser execution, full SERP feature extraction, authentication, and systemd packaging.

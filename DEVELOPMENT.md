@@ -8,6 +8,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.browser`: Phase 2 escalation contracts and challenge classification.
 - `usurp.parser`: selectolax organic-result extraction and strict SerpApi response models.
 - `usurp.cache`: asynchronous SQLite WAL cache with canonical parameter hashing and TTL expiry.
+- `usurp.rate_limit`: async token-bucket rate limiter for client/proxy keys.
 - `usurp.main:app`: minimal ASGI endpoint with a SerpApi-shaped response shell.
 - `tests/`: contract and endpoint tests.
 

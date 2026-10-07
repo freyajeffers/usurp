@@ -6,6 +6,7 @@ from uuid import UUID
 from curl_cffi.requests import AsyncSession
 from pydantic import BaseModel, ConfigDict, Field
 
+from ..browser import ChallengeType, detect_challenge
 from .models import DeviceType, TransportRequest, TransportResult
 from .proxy_pool import ProxyPoolRouter
 
@@ -120,16 +121,6 @@ class FastPathTransport:
 
     @staticmethod
     def _requires_escalation(status_code: int, raw_html: str) -> bool:
-        if status_code in {403, 429, 503}:
-            return True
-        body = raw_html.casefold()
-        return any(
-            marker in body
-            for marker in (
-                "/sorry/index",
-                "recaptcha",
-                "captcha",
-                "unusual traffic",
-                "before you continue to google",
-            )
+        return (
+            status_code in {403, 429, 503} or detect_challenge(raw_html) is not ChallengeType.NONE
         )

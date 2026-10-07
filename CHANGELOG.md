@@ -28,5 +28,6 @@ All notable changes to usurp are documented here.
 - Expanded SERP parsing for knowledge graphs, related questions, related searches, and next-page pagination.
 - Added a hardened systemd user-service unit and deployment instructions under `packaging/systemd/`.
 - Added static SERP fixture coverage for organic, featured-snippet, knowledge-panel, mobile, and pagination layouts.
+- Expanded the static fixture corpus to 50 representative layouts and added an all-fixture extraction regression test.
 
-Not implemented yet: broader SERP fixture coverage.
+Not implemented yet: production validation against captured real Google layouts.

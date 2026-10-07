@@ -7,6 +7,16 @@ from usurp.parser import parse_serp_html
 FIXTURES = Path(__file__).parent / "fixtures" / "serp"
 
 
+def test_static_fixture_corpus_has_planned_minimum() -> None:
+    assert len(list(FIXTURES.glob("*.html"))) >= 50
+
+
+def test_every_static_fixture_extracts_at_least_one_result() -> None:
+    for fixture in sorted(FIXTURES.glob("*.html")):
+        response = parse_serp_html(fixture.read_text(), query=fixture.stem)
+        assert response.organic_results, fixture.name
+
+
 @pytest.mark.parametrize(
     ("fixture_name", "expected_title"),
     [

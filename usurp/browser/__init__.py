@@ -43,7 +43,12 @@ def detect_challenge(raw_html: str) -> ChallengeType:
         return ChallengeType.HARD_CAPTCHA
     if "before you continue to google" in body or "consent.google.com" in body:
         return ChallengeType.CONSENT_DIALOG
-    if "/sorry/index" in body or "unusual traffic" in body or "jschl-answer" in body:
+    if (
+        "/sorry/index" in body
+        or "unusual traffic" in body
+        or "jschl-answer" in body
+        or "enablejs" in body
+    ):
         return ChallengeType.JS_CHALLENGE
     return ChallengeType.NONE
 

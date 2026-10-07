@@ -27,3 +27,4 @@ def test_challenge_detector_classifies_known_interstitials() -> None:
     assert detect_challenge("Before you continue to Google") is ChallengeType.CONSENT_DIALOG
     assert detect_challenge("/sorry/index?continue=1") is ChallengeType.JS_CHALLENGE
     assert detect_challenge("<div class='g-recaptcha'></div>") is ChallengeType.HARD_CAPTCHA
+    assert detect_challenge("/httpservice/retry/enablejs?sei=abc") is ChallengeType.JS_CHALLENGE

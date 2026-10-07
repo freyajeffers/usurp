@@ -13,7 +13,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
-Browser execution, rate limiting, core SERP feature extraction, systemd packaging, and a 50-file representative static fixture corpus are implemented and integrated. The fixtures are synthetic regression inputs; production validation against captured real Google layouts remains outstanding.
+Browser execution, rate limiting, core SERP feature extraction, systemd packaging, and a 50-file representative static fixture corpus are implemented and integrated. Live fast-path validation reached Google and correctly detected an enable-JavaScript interstitial; browser escalation reached Google's CAPTCHA page and did not resolve it. The synthetic fixtures are not a substitute for captured real Google layouts.
 
 ## Commands
 

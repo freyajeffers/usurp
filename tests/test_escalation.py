@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from usurp.escalation import EscalationManager
 
 
@@ -23,3 +25,10 @@ def test_escalation_manager_persists_pending_ticket_and_validates_resolution(
     resolved = manager.get_ticket("ticket-1")
     assert resolved is not None
     assert resolved["status"] == "resolved"
+
+
+def test_escalation_manager_rejects_path_traversal_ticket_ids(tmp_path: Path) -> None:
+    manager = EscalationManager(tmp_path)
+
+    with pytest.raises(ValueError, match="ticket id"):
+        manager.create_ticket("../outside", "query", "challenge")

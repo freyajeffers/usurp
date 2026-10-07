@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ class EscalationManager:
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def _ticket_path(self, ticket_id: str) -> Path:
+        if re.fullmatch(r"[A-Za-z0-9_-]{1,128}", ticket_id) is None:
+            raise ValueError("ticket id must contain only letters, numbers, '_' or '-'")
         return self.base_dir / f"{ticket_id}.json"
 
     def create_ticket(

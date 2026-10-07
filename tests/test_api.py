@@ -41,3 +41,14 @@ async def test_health_endpoint_reports_ready() -> None:
         response = await ac.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_search_requires_configured_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("USURP_API_KEY", "expected-secret")
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        missing = await ac.get("/search", params={"q": "test"})
+        valid = await ac.get("/search", params={"q": "test", "api_key": "expected-secret"})
+    assert missing.status_code == 401
+    assert valid.status_code == 200

@@ -1,4 +1,6 @@
+import os
 from pathlib import Path
+from secrets import compare_digest
 
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -66,6 +68,11 @@ async def search(
 ) -> dict[str, object]:
     if query is None:
         raise HTTPException(status_code=400, detail="missing query parameters")
+    expected_api_key = os.getenv("USURP_API_KEY")
+    if expected_api_key is not None and (
+        query.api_key is None or not compare_digest(query.api_key, expected_api_key)
+    ):
+        raise HTTPException(status_code=401, detail="invalid API key")
     try:
         response = await service.search(
             TransportRequest(

@@ -21,5 +21,6 @@ All notable changes to usurp are documented here.
 - Added token-bucket rate limiting with per-key burst capacity, refill, proxy delay enforcement, and reset support.
 - Added `SearchService` orchestration for transport, challenge escalation, parsing, and optional cache hits.
 - Replaced the placeholder API with `/search`, `/v1/search`, and `/health` endpoints backed by dependency-injected search services.
+- Added optional constant-time API-key enforcement through `USURP_API_KEY`.
 
-Not implemented yet: browser execution, full SERP feature extraction, authentication, and systemd packaging.
+Not implemented yet: browser execution, full SERP feature extraction, rate-limit wiring, and systemd packaging.

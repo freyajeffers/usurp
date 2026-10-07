@@ -13,7 +13,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
-Browser execution, full SERP feature extraction, production authentication, rate-limit wiring, and systemd packaging are not implemented yet.
+Browser execution, full SERP feature extraction, rate-limit wiring, and systemd packaging are not implemented yet.
 
 ## Commands
 

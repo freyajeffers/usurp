@@ -4,7 +4,7 @@
 
 The repository currently implements the first dependency slice from the project plan. It targets Python 3.14.8 and resolves current dependencies through `uv.lock`:
 
-- `usurp.transport`: strict Pydantic v2 contracts for Phase 1 transport data.
+- `usurp.transport`: strict Pydantic v2 contracts and curl-cffi fast-path transport for Phase 1.
 - `usurp.main:app`: minimal ASGI endpoint with a SerpApi-shaped response shell.
 - `tests/`: contract and endpoint tests.
 

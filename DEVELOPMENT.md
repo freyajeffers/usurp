@@ -6,6 +6,7 @@ The repository currently implements the first dependency slice from the project 
 
 - `usurp.transport`: strict Pydantic v2 contracts, curl-cffi fast-path transport, device routing, consent cookies, and concurrency-safe proxy pool for Phase 1.
 - `usurp.browser`: Phase 2 escalation contracts and challenge classification.
+- `usurp.parser`: selectolax organic-result extraction and strict SerpApi response models.
 - `usurp.main:app`: minimal ASGI endpoint with a SerpApi-shaped response shell.
 - `tests/`: contract and endpoint tests.
 

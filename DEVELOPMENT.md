@@ -5,7 +5,7 @@
 The repository currently implements the first dependency slice from the project plan. It targets Python 3.14.8 and resolves current dependencies through `uv.lock`:
 
 - `usurp.transport`: strict Pydantic v2 contracts, curl-cffi fast-path transport, device routing, consent cookies, and concurrency-safe proxy pool for Phase 1.
-- `usurp.browser`: Phase 2 escalation contracts and challenge classification.
+- `usurp.browser`: Phase 2 escalation contracts, challenge classification, and Playwright execution.
 - `usurp.parser`: selectolax organic-result extraction and strict SerpApi response models.
 - `usurp.cache`: asynchronous SQLite WAL cache with canonical parameter hashing and TTL expiry.
 - `usurp.rate_limit`: async token-bucket rate limiter for client/proxy keys.
@@ -13,7 +13,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
-Browser execution, full SERP feature extraction, rate-limit wiring, and systemd packaging are not implemented yet.
+Browser execution is implemented; full SERP feature extraction, rate-limit wiring, browser escalation integration into `SearchService`, and systemd packaging are not implemented yet.
 
 ## Commands
 

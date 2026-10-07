@@ -27,5 +27,6 @@ All notable changes to usurp are documented here.
 - Wired token-bucket rate limiting into `SearchService` and the REST API with per-client keys and HTTP 429 responses.
 - Expanded SERP parsing for knowledge graphs, related questions, related searches, and next-page pagination.
 - Added a hardened systemd user-service unit and deployment instructions under `packaging/systemd/`.
+- Added static SERP fixture coverage for organic, featured-snippet, knowledge-panel, mobile, and pagination layouts.
 
 Not implemented yet: broader SERP fixture coverage.

@@ -26,5 +26,6 @@ All notable changes to usurp are documented here.
 - Integrated browser escalation into `SearchService` and the default FastAPI service dependency.
 - Wired token-bucket rate limiting into `SearchService` and the REST API with per-client keys and HTTP 429 responses.
 - Expanded SERP parsing for knowledge graphs, related questions, related searches, and next-page pagination.
+- Added a hardened systemd user-service unit and deployment instructions under `packaging/systemd/`.
 
-Not implemented yet: full SERP feature extraction and systemd packaging.
+Not implemented yet: broader SERP fixture coverage.

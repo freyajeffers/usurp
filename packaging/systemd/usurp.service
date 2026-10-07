@@ -1,0 +1,35 @@
+[Unit]
+Description=usurp autonomous Google SERP extraction engine
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+WorkingDirectory=%h/Projects/usurp
+ExecStart=%h/Projects/usurp/.venv/bin/python -m uvicorn usurp.main:app --host ${USURP_HOST} --port ${USURP_PORT}
+Environment=USURP_HOST=127.0.0.1
+Environment=USURP_PORT=8000
+EnvironmentFile=-%h/.config/usurp/environment
+Restart=on-failure
+RestartSec=5s
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.cache/usurp
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true
+PrivateDevices=true
+ProtectClock=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=default.target

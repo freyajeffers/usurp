@@ -53,7 +53,11 @@ The project pins Python 3.14.8 in `.python-version` and resolves the newest comp
 \# Start the local ASGI server\
 uvicorn usurp.main:app --host 127.0.0.1 --port 8000 --workers 2
 
-### 2.3 Performing a Query
+### 2.3 Running under systemd
+
+A hardened user-service unit is provided in `packaging/systemd/usurp.service`. Install it with the instructions in `packaging/systemd/README.txt`, then manage it with `systemctl --user`. The unit uses journald, automatic restart, private temporary storage, read-only home protection, and a restricted writable cache path.
+
+### 2.4 Performing a Query
 
 curl -s -G "http://127.0.0.1:8000/search" \\\
  --data-urlencode "q=quantum error correction" \\\

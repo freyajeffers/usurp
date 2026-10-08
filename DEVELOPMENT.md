@@ -13,7 +13,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
-Browser execution uses Camoufox as the primary escalator with Playwright fallback; rate limiting, core SERP feature extraction, systemd packaging, a 50-file representative static fixture corpus, and authenticated human-review endpoints are implemented and integrated. Camoufox is installed and verified on this ARM64 host; `example.com` renders successfully, while Google challenge responses remain fail-closed. Automated CAPTCHA bypass is not implemented.
+Browser execution uses Camoufox as the primary escalator with Playwright fallback; rate limiting, core SERP feature extraction, systemd packaging, a 50-file representative static fixture corpus, authenticated human-review endpoints, and a disabled-by-default solver interface are implemented and integrated. Camoufox is installed and verified on this ARM64 host; `example.com` renders successfully, while Google challenge responses remain fail-closed. Automated CAPTCHA bypass is not implemented.
 
 ## Commands
 

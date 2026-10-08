@@ -33,6 +33,8 @@ All notable changes to usurp are documented here.
 - Added typed fail-closed browser challenge errors and structured HTTP 503 responses for unresolved CAPTCHA/challenge states.
 - Added local escalation tickets for authorized human-in-the-loop review and rendered-HTML submission without automated CAPTCHA bypass.
 - Added Camoufox as the primary browser escalator with Playwright fallback; Camoufox remains render-only and does not solve CAPTCHAs.
+- Added a disabled-by-default `SolverAdapter` protocol with a non-solving mock adapter for approved human/internal integrations.
+- Camoufox humanization, sticky proxy routing, cooldowns, and fail-closed challenge handling remain enabled as challenge-avoidance measures.
 - Verified Camoufox ARM64 browser installation and live rendering against `example.com`; Google challenge responses remain fail-closed.
 - Added authenticated escalation-admin endpoints to list pending tickets and submit human-reviewed rendered HTML.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.

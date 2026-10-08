@@ -78,3 +78,24 @@ async def test_escalation_admin_endpoints_list_and_resolve(tmp_path) -> None:
     assert listed.json()[0]["id"] == "ticket-1"
     assert resolved.status_code == 200
     assert resolved.json()["organic_results"][0]["title"] == "Resolved"
+
+
+@pytest.mark.asyncio
+async def test_admin_ui_lists_and_resolves_ticket(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    manager.create_ticket("ticket-ui", "test", "captcha")
+    app.dependency_overrides[get_escalation_manager] = lambda: manager
+    transport = ASGITransport(app=app)
+    html = '<div class="MjjYud"><a href="https://example.test"><h3>UI result</h3></a></div>'
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        page = await ac.get("/admin/ui")
+        resolved = await ac.post(
+            "/admin/ui/resolve",
+            data={"api_key": "operator", "ticket_id": "ticket-ui"},
+            files={"html_file": ("rendered.html", html, "text/html")},
+            follow_redirects=False,
+        )
+    assert page.status_code == 200
+    assert "ticket-ui" in page.text
+    assert resolved.status_code == 303
+    assert manager.get_ticket("ticket-ui")["status"] == "resolved"

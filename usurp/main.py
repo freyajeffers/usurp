@@ -2,7 +2,10 @@ import os
 from pathlib import Path
 from secrets import compare_digest
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
+from fastapi.requests import Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser.camofox import CamofoxEscalator
@@ -13,6 +16,7 @@ from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchS
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
 
 app = FastAPI(title="usurp - SERP Extraction Engine")
+templates = Jinja2Templates(directory=str(Path(__file__).parents[1] / "templates"))
 
 
 class SearchQuery(BaseModel):
@@ -88,6 +92,40 @@ def authorize_api_key(api_key: str | None) -> None:
         api_key is None or not compare_digest(api_key, expected_api_key)
     ):
         raise HTTPException(status_code=401, detail="invalid API key")
+
+
+@app.get("/admin/ui", response_class=HTMLResponse)
+async def admin_ui(
+    request: Request,
+    api_key: str | None = None,
+    manager: EscalationManager = Depends(get_escalation_manager),  # noqa: B008
+) -> HTMLResponse:
+    authorize_api_key(api_key)
+    return templates.TemplateResponse(
+        request=request,
+        name="admin.html",
+        context={"tickets": manager.list_tickets(), "api_key": api_key},
+    )
+
+
+@app.post("/admin/ui/resolve")
+async def admin_ui_resolve(
+    api_key: str = Form(...),
+    ticket_id: str = Form(...),
+    html_file: UploadFile = File(...),  # noqa: B008
+    manager: EscalationManager = Depends(get_escalation_manager),  # noqa: B008
+) -> RedirectResponse:
+    authorize_api_key(api_key)
+    if html_file.content_type not in ("text/html", "application/xhtml+xml"):
+        raise HTTPException(status_code=400, detail="html_file must be text/html")
+    contents = (await html_file.read(5_000_001)).decode("utf-8")
+    if len(contents) > 5_000_000:
+        raise HTTPException(status_code=413, detail="html_file is too large")
+    try:
+        manager.submit_solution(ticket_id, contents)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="ticket not found") from exc
+    return RedirectResponse(url=f"/admin/ui?api_key={api_key}", status_code=303)
 
 
 @app.get("/health")

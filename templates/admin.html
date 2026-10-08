@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>usurp - Escalation Tickets</title></head>
+  <body>
+    <h1>Escalation Tickets</h1>
+    <p>Authorized UI for human reviewers. Upload rendered HTML only.</p>
+    <table>
+      <thead><tr><th>Ticket ID</th><th>Query</th><th>Status</th><th>Created</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for t in tickets %}
+        <tr>
+          <td>{{ t.id }}</td><td>{{ t.query }}</td><td>{{ t.status }}</td><td>{{ t.created_at }}</td>
+          <td><form action="/admin/ui/resolve" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="ticket_id" value="{{ t.id }}">
+            <input type="hidden" name="api_key" value="{{ api_key or '' }}">
+            <input type="file" name="html_file" accept=".html,text/html" required>
+            <button type="submit">Submit rendered HTML</button>
+          </form></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </body>
+</html>

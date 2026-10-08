@@ -9,6 +9,8 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser.camofox import CamofoxEscalator
+from usurp.browser.cdp import CdpEscalator
+from usurp.browser.chain import EscalationChain
 from usurp.escalation import EscalationManager
 from usurp.providers import GoogleProgrammableSearchProvider
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
@@ -69,7 +71,12 @@ def get_service() -> SearchService:
     return SearchService(
         transport=FastPathTransport(),
         cache_path=Path.home() / ".cache" / "usurp" / "serp.sqlite3",
-        escalator=CamofoxEscalator(),
+        escalator=EscalationChain(
+            (
+                CamofoxEscalator(),
+                CdpEscalator(cdp_endpoint=os.getenv("USURP_CDP_ENDPOINT")),
+            )
+        ),
         rate_limiter=TokenBucketRateLimiter(
             RateLimitPolicy(
                 max_requests_per_minute=60,

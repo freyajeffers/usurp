@@ -58,7 +58,18 @@ uvicorn usurp.main:app --host 127.0.0.1 --port 8000 --workers 2
 
 A hardened user-service unit is provided in `packaging/systemd/usurp.service`. Install it with the instructions in `packaging/systemd/README.txt`, then manage it with `systemctl --user`. The unit uses journald, automatic restart, private temporary storage, read-only home protection, and a restricted writable cache path.
 
-### 2.4 Performing a Query
+### 2.4 Human-review escalation workflow
+
+When Google presents an unresolved challenge, the API returns HTTP 503 with a `ticket_id`. Authorized operators can list tickets and submit rendered HTML after completing the challenge in an approved browser session:
+
+```text
+curl -G http://127.0.0.1:8000/admin/escalations --data-urlencode "api_key=$USURP_API_KEY"
+./bin/resolve_escalation.py TICKET_ID /path/to/authorized-rendered.html
+```
+
+The CLI writes the parsed result into the local escalation directory. It does not solve or bypass CAPTCHAs.
+
+### 2.5 Performing a Query
 
 curl -s -G "http://127.0.0.1:8000/search" \\\
  --data-urlencode "q=quantum error correction" \\\

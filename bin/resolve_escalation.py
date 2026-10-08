@@ -25,16 +25,21 @@ def main() -> int:
         return 2
 
     manager = EscalationManager(args.escalations_dir)
-    try:
-        result = manager.submit_solution(args.ticket_id, args.html_file.read_text())
-    except FileNotFoundError:
+    ticket = manager.get_ticket(args.ticket_id)
+    if ticket is None:
         print(f"error: ticket not found: {args.ticket_id}", file=sys.stderr)
         return 3
+    try:
+        manager.submit_solution(args.ticket_id, args.html_file.read_text())
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 4
 
-    print("submitted, result saved to:", result.get("search_metadata", {}).get("id", "<unknown>"))
+    resolved = manager.get_ticket(args.ticket_id)
+    print(
+        "submitted, result saved to:",
+        resolved.get("result_path", "<unknown>") if resolved else "<unknown>",
+    )
     return 0
 
 

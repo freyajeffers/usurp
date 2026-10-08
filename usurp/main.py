@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser.camofox import CamofoxEscalator
+from usurp.escalation import EscalationManager
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
 from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
@@ -24,6 +25,12 @@ class SearchQuery(BaseModel):
     device: DeviceType = DeviceType.DESKTOP
     api_key: str | None = None
     no_cache: bool = False
+
+
+class EscalationSubmission(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    rendered_html: str = Field(min_length=1, max_length=5_000_000)
 
 
 async def get_query(
@@ -50,6 +57,9 @@ async def get_query(
     )
 
 
+_ESCALATION_MANAGER = EscalationManager(Path.home() / ".cache" / "usurp" / "escalations")
+
+
 def get_service() -> SearchService:
     return SearchService(
         transport=FastPathTransport(),
@@ -62,7 +72,20 @@ def get_service() -> SearchService:
                 per_proxy_delay_seconds=0.0,
             )
         ),
+        escalation_manager=_ESCALATION_MANAGER,
     )
+
+
+def get_escalation_manager() -> EscalationManager:
+    return _ESCALATION_MANAGER
+
+
+def authorize_api_key(api_key: str | None) -> None:
+    expected_api_key = os.getenv("USURP_API_KEY")
+    if expected_api_key is not None and (
+        api_key is None or not compare_digest(api_key, expected_api_key)
+    ):
+        raise HTTPException(status_code=401, detail="invalid API key")
 
 
 @app.get("/health")
@@ -78,11 +101,7 @@ async def search(
 ) -> dict[str, object]:
     if query is None:
         raise HTTPException(status_code=400, detail="missing query parameters")
-    expected_api_key = os.getenv("USURP_API_KEY")
-    if expected_api_key is not None and (
-        query.api_key is None or not compare_digest(query.api_key, expected_api_key)
-    ):
-        raise HTTPException(status_code=401, detail="invalid API key")
+    authorize_api_key(query.api_key)
     try:
         response = await service.search(
             TransportRequest(
@@ -111,3 +130,28 @@ async def search(
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return response.model_dump(mode="json")
+
+
+@app.get("/admin/escalations")
+async def list_escalations(
+    api_key: str | None = None,
+    manager: EscalationManager = Depends(get_escalation_manager),  # noqa: B008
+) -> list[dict[str, object]]:
+    authorize_api_key(api_key)
+    return manager.list_tickets()
+
+
+@app.post("/admin/escalations/{ticket_id}/resolve")
+async def resolve_escalation(
+    ticket_id: str,
+    submission: EscalationSubmission,
+    api_key: str | None = None,
+    manager: EscalationManager = Depends(get_escalation_manager),  # noqa: B008
+) -> dict[str, object]:
+    authorize_api_key(api_key)
+    try:
+        return manager.submit_solution(ticket_id, submission.rendered_html)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail="escalation ticket not found") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -34,6 +34,7 @@ All notable changes to usurp are documented here.
 - Added local escalation tickets for authorized human-in-the-loop review and rendered-HTML submission without automated CAPTCHA bypass.
 - Added Camoufox as the primary browser escalator with Playwright fallback; Camoufox remains render-only and does not solve CAPTCHAs.
 - Verified Camoufox ARM64 browser installation and live rendering against `example.com`; Google challenge responses remain fail-closed.
+- Added authenticated escalation-admin endpoints to list pending tickets and submit human-reviewed rendered HTML.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

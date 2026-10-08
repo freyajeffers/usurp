@@ -1,7 +1,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from usurp.main import app, get_service
+from usurp.escalation import EscalationManager
+from usurp.main import app, get_escalation_manager, get_service
 from usurp.parser import parse_serp_html
 
 
@@ -58,3 +59,22 @@ async def test_search_requires_configured_api_key(monkeypatch: pytest.MonkeyPatc
         valid = await ac.get("/search", params={"q": "test", "api_key": "expected-secret"})
     assert missing.status_code == 401
     assert valid.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_escalation_admin_endpoints_list_and_resolve(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    manager.create_ticket("ticket-1", "test", "captcha")
+    app.dependency_overrides[get_escalation_manager] = lambda: manager
+    transport = ASGITransport(app=app)
+    html = '<div class="MjjYud"><a href="https://example.test"><h3>Resolved</h3></a></div>'
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        listed = await ac.get("/admin/escalations")
+        resolved = await ac.post(
+            "/admin/escalations/ticket-1/resolve",
+            json={"rendered_html": html},
+        )
+    assert listed.status_code == 200
+    assert listed.json()[0]["id"] == "ticket-1"
+    assert resolved.status_code == 200
+    assert resolved.json()["organic_results"][0]["title"] == "Resolved"

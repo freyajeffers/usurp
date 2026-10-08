@@ -3,6 +3,8 @@ import hashlib
 import json
 import sqlite3
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -80,9 +82,22 @@ class SQLiteSerpCache:
         connection.execute("PRAGMA mmap_size = 268435456")
         return connection
 
+    @contextmanager
+    def _connection(self) -> Iterator[sqlite3.Connection]:
+        connection = self._connect()
+        try:
+            yield connection
+        except BaseException:
+            connection.rollback()
+            raise
+        else:
+            connection.commit()
+        finally:
+            connection.close()
+
     def _initialize_sync(self) -> None:
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        with self._connect() as connection:
+        with self._connection() as connection:
             connection.execute("PRAGMA journal_mode = WAL")
             connection.execute("""CREATE TABLE IF NOT EXISTS serp_cache (
                     query_hash TEXT PRIMARY KEY,
@@ -98,7 +113,7 @@ class SQLiteSerpCache:
             )
 
     def _set_sync(self, *values: object) -> None:
-        with self._connect() as connection:
+        with self._connection() as connection:
             connection.execute(
                 """INSERT INTO serp_cache
                 (query_hash, raw_query, parameters_json, response_json, created_at, expires_at)
@@ -113,7 +128,7 @@ class SQLiteSerpCache:
 
     def _get_sync(self, query_hash: str) -> str | None:
         now = int(time.time() * 1000)
-        with self._connect() as connection:
+        with self._connection() as connection:
             row = connection.execute(
                 "SELECT response_json FROM serp_cache WHERE query_hash = ? AND expires_at > ?",
                 (query_hash, now),
@@ -128,7 +143,7 @@ class SQLiteSerpCache:
             return str(row[0])
 
     def _pragmas_sync(self) -> dict[str, Any]:
-        with self._connect() as connection:
+        with self._connection() as connection:
             return {
                 "journal_mode": str(connection.execute("PRAGMA journal_mode").fetchone()[0]),
                 "synchronous": int(connection.execute("PRAGMA synchronous").fetchone()[0]),

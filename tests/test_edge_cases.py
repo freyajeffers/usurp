@@ -27,6 +27,17 @@ def test_cache_rejects_invalid_ttl() -> None:
         CacheSettings.validate_ttl(timedelta(minutes=1))
 
 
+def test_cache_connection_rolls_back_and_closes_on_error(tmp_path: Path) -> None:
+    cache = SQLiteSerpCache(tmp_path / "cache.db")
+    with cache._connection() as connection:
+        connection.execute("CREATE TABLE rollback_test (value TEXT)")
+    with pytest.raises(RuntimeError, match="rollback"), cache._connection() as connection:
+        connection.execute("INSERT INTO rollback_test VALUES ('not-committed')")
+        raise RuntimeError("rollback")
+    with cache._connection() as connection:
+        assert connection.execute("SELECT * FROM rollback_test").fetchone() is None
+
+
 def test_escalation_manager_rejects_bad_ids_and_corrupt_files(tmp_path: Path) -> None:
     manager = EscalationManager(tmp_path)
     with pytest.raises(ValueError):

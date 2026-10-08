@@ -5,7 +5,7 @@ from secrets import compare_digest
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
-from usurp.browser import PlaywrightEscalator
+from usurp.browser.camofox import CamofoxEscalator
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
 from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
@@ -54,7 +54,7 @@ def get_service() -> SearchService:
     return SearchService(
         transport=FastPathTransport(),
         cache_path=Path.home() / ".cache" / "usurp" / "serp.sqlite3",
-        escalator=PlaywrightEscalator(),
+        escalator=CamofoxEscalator(),
         rate_limiter=TokenBucketRateLimiter(
             RateLimitPolicy(
                 max_requests_per_minute=60,

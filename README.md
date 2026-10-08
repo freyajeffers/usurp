@@ -44,9 +44,10 @@ and ultra-low latency.
 ```text
 # Requires Python 3.14.8 and uv
 uv sync --extra dev
+camoufox fetch
 ```
 
-The project pins Python 3.14.8 in `.python-version` and resolves the newest compatible runtime and development dependencies into `uv.lock`.
+The project pins Python 3.14.8 in `.python-version` and resolves the newest compatible runtime and development dependencies into `uv.lock`. On ARM64, Camoufox may require a native compiler toolchain for `indexed-zstd`; if Camoufox assets cannot be installed, the application falls back to Playwright.
 
 ### 2.2 Starting the Service
 

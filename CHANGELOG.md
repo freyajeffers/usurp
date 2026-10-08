@@ -32,6 +32,8 @@ All notable changes to usurp are documented here.
 - Added detection for Google's `/httpservice/retry/enablejs` interstitial observed during live fast-path validation.
 - Added typed fail-closed browser challenge errors and structured HTTP 503 responses for unresolved CAPTCHA/challenge states.
 - Added local escalation tickets for authorized human-in-the-loop review and rendered-HTML submission without automated CAPTCHA bypass.
+- Added Camoufox as the primary browser escalator with Playwright fallback; Camoufox remains render-only and does not solve CAPTCHAs.
+- Verified Camoufox ARM64 browser installation and live rendering against `example.com`; Google challenge responses remain fail-closed.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

@@ -10,7 +10,7 @@ The repository currently implements the first dependency slice from the project 
 - `usurp.cache`: asynchronous SQLite WAL cache with canonical parameter hashing and TTL expiry.
 - `usurp.rate_limit`: async token-bucket rate limiter for client/proxy keys.
 - `usurp.service`: transport → escalation check → parser → cache orchestration.
-- `usurp.main:app`: `/search`, `/v1/search`, and `/health` FastAPI endpoints with dependency injection.
+- `usurp.main:app`: `/search`, `/v1/search`, `/health`, and `/metrics` FastAPI endpoints with dependency injection.
 - `tests/`: contract and endpoint tests.
 
 Browser execution uses Camoufox as the primary escalator, optional Chromium CDP as the intermediate fallback, and human review as the final fallback; rate limiting, core SERP feature extraction, systemd packaging, a 50-file representative static fixture corpus, authenticated human-review endpoints, a browser review UI, Prometheus metrics at `/metrics`, a disabled-by-default solver interface, and an opt-in official Google Programmable Search fallback are implemented and integrated. Camoufox is installed and verified on this ARM64 host; `example.com` renders successfully, while Google challenge responses remain fail-closed. Automated CAPTCHA bypass is not implemented.

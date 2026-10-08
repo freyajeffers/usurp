@@ -2,7 +2,7 @@ FROM python:3.14-slim
 
 # Install system build deps needed for indexed-zstd / camoufox on ARM
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential clang llvm pkg-config git curl ca-certificates \
+    build-essential clang llvm pkg-config libzstd-dev git curl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

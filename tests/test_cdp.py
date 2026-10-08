@@ -47,3 +47,25 @@ async def test_escalation_chain_moves_to_cdp_after_camofox_failure() -> None:
 def test_cdp_without_endpoint_is_unresolved_not_an_exception() -> None:
     response = __import__("asyncio").run(CdpEscalator().execute(request()))
     assert response.resolved_successfully is False
+
+
+def test_cdp_proxy_server_preserves_scheme_host_and_port() -> None:
+    cdp = CdpEscalator()
+    assert cdp.proxy_server(request_with_proxy("http://proxy.example.test:8080")) == (
+        "http://proxy.example.test:8080"
+    )
+
+
+def request_with_proxy(proxy_uri: str) -> EscalationRequest:
+    return EscalationRequest(
+        target_url="https://example.test",
+        user_agent="Mozilla/5.0",
+        viewport_width=1280,
+        viewport_height=900,
+        proxy_uri=proxy_uri,
+    )
+
+
+def test_cdp_proxy_server_rejects_proxy_without_port() -> None:
+    with pytest.raises(ValueError, match="host and port"):
+        CdpEscalator.proxy_server(request_with_proxy("http://proxy.example.test"))

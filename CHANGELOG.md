@@ -42,6 +42,7 @@ All notable changes to usurp are documented here.
 - Added an optional Chromium DevTools Protocol escalation stage between Camoufox and human-review tickets, enabled with `USURP_CDP_ENDPOINT`.
 - Added Prometheus instrumentation and an authenticated-independent `/metrics` endpoint for search latency, request volume, and escalator attempts.
 - Added an ARM-friendly Dockerfile and GitHub Actions CI for lint, tests, and multi-architecture image builds.
+- Expanded test coverage with marked HTTP integration tests for transport → escalation → parser → cache and unresolved-ticket flows; CI now runs unit coverage (minimum 80%), integration tests, and mypy.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

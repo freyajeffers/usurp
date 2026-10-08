@@ -29,8 +29,12 @@ async def test_cache_expires_entries(tmp_path) -> None:
     params = {"q": "test"}
     await cache.set(params, response)
 
-    with sqlite3.connect(tmp_path / "cache.db") as connection:
+    connection = sqlite3.connect(tmp_path / "cache.db")
+    try:
         connection.execute("UPDATE serp_cache SET expires_at = 0")
+        connection.commit()
+    finally:
+        connection.close()
 
     assert await cache.get(params) is None
 

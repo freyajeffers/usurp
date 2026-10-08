@@ -1,7 +1,13 @@
 import pytest
 from pydantic import ValidationError
 
-from usurp.browser import ChallengeType, EscalationRequest, detect_challenge
+from usurp.browser import (
+    ChallengeType,
+    EscalationRequest,
+    EscalationResult,
+    PlaywrightEscalator,
+    detect_challenge,
+)
 
 
 def test_escalation_request_applies_strict_defaults_and_bounds() -> None:
@@ -28,3 +34,30 @@ def test_challenge_detector_classifies_known_interstitials() -> None:
     assert detect_challenge("/sorry/index?continue=1") is ChallengeType.JS_CHALLENGE
     assert detect_challenge("<div class='g-recaptcha'></div>") is ChallengeType.HARD_CAPTCHA
     assert detect_challenge("/httpservice/retry/enablejs?sei=abc") is ChallengeType.JS_CHALLENGE
+
+
+@pytest.mark.asyncio
+async def test_playwright_escalator_uses_injected_runner() -> None:
+    request = EscalationRequest(
+        target_url="https://www.google.com/search?q=test",
+        user_agent="Mozilla/5.0",
+        viewport_width=1280,
+        viewport_height=900,
+    )
+    expected = EscalationResult(
+        rendered_html="<html>results</html>",
+        final_url=request.target_url,
+        execution_duration_ms=1.0,
+        challenge_type_encountered=ChallengeType.NONE,
+        resolved_successfully=True,
+    )
+    calls: list[EscalationRequest] = []
+
+    async def runner(actual: EscalationRequest) -> EscalationResult:
+        calls.append(actual)
+        return expected
+
+    result = await PlaywrightEscalator(runner=runner).execute(request)
+
+    assert result == expected
+    assert calls == [request]

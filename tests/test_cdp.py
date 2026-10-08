@@ -44,6 +44,28 @@ async def test_escalation_chain_moves_to_cdp_after_camofox_failure() -> None:
     assert calls == ["camofox", "cdp"]
 
 
+def test_escalation_chain_requires_an_escalator() -> None:
+    with pytest.raises(ValueError, match="at least one"):
+        EscalationChain(())
+
+
+@pytest.mark.asyncio
+async def test_escalation_chain_asserts_if_internal_chain_is_cleared() -> None:
+    chain = EscalationChain((CdpEscalator(),))
+    chain._escalators = ()
+    with pytest.raises(RuntimeError, match="no result"):
+        await chain.execute(request())
+
+
+@pytest.mark.asyncio
+async def test_escalation_chain_returns_last_unresolved_result() -> None:
+    async def unresolved(_: EscalationRequest) -> EscalationResult:
+        return result(False)
+
+    response = await EscalationChain((CdpEscalator(runner=unresolved),)).execute(request())
+    assert response.resolved_successfully is False
+
+
 def test_cdp_without_endpoint_is_unresolved_not_an_exception() -> None:
     response = __import__("asyncio").run(CdpEscalator().execute(request()))
     assert response.resolved_successfully is False

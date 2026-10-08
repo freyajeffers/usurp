@@ -121,3 +121,12 @@ async def test_mobile_requests_include_mobile_user_agent_and_consent_cookie() ->
     assert isinstance(headers, dict)
     assert "Mobile" in headers["User-Agent"]
     assert headers["Cookie"] == "CONSENT=PENDING+987; SOCS=CAESHAgCEhJnd3NfMjAyMzAxMjAx"
+
+
+@pytest.mark.asyncio
+async def test_fast_path_includes_time_range_parameter() -> None:
+    response = SimpleNamespace(status_code=200, headers={}, text="<html>results</html>")
+    session = FakeSession(response)
+    client = FastPathTransport(session_factory=lambda: session)
+    await client.fetch(TransportRequest(query="test", time_range="qdr:w"))
+    assert session.calls[0]["params"]["tbs"] == "qdr:w"

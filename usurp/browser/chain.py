@@ -26,7 +26,8 @@ class EscalationChain:
             last_result = await escalator.execute(request)
             if last_result.resolved_successfully:
                 return last_result
-        assert last_result is not None
+        if last_result is None:
+            raise RuntimeError("escalation chain returned no result")
         return last_result
 
 

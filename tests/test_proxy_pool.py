@@ -70,3 +70,18 @@ async def test_router_success_resets_failures_and_updates_latency() -> None:
     assert node.consecutive_failures == 0
     assert node.is_active is True
     assert node.avg_latency_ms == 42.5
+
+
+def test_router_rejects_invalid_configuration() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        ProxyPoolRouter([], base_cooldown_seconds=0)
+
+
+@pytest.mark.asyncio
+async def test_router_rejects_invalid_result_updates() -> None:
+    node = proxy("US")
+    router = ProxyPoolRouter([node])
+    with pytest.raises(ValueError, match="non-negative"):
+        await router.record_result(node.id, status_code=200, response_time_ms=-1)
+    with pytest.raises(KeyError, match="unknown proxy"):
+        await router.record_result(uuid4(), status_code=200, response_time_ms=1)

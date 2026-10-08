@@ -43,6 +43,7 @@ All notable changes to usurp are documented here.
 - Added Prometheus instrumentation and an authenticated-independent `/metrics` endpoint for search latency, request volume, and escalator attempts.
 - Added an ARM-friendly Dockerfile and GitHub Actions CI for lint, tests, and multi-architecture image builds.
 - Expanded test coverage with marked HTTP integration tests for transport → escalation → parser → cache and unresolved-ticket flows; CI now runs unit coverage (minimum 80%), integration tests, and mypy.
+- Expanded unit and backend fakes to exercise every application branch; CI now enforces 100% statement coverage.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

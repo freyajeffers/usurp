@@ -1,9 +1,19 @@
 import pytest
+from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
+from usurp.browser import ChallengeType
 from usurp.escalation import EscalationManager
-from usurp.main import app, get_escalation_manager, get_service
+from usurp.main import (
+    EscalationSubmission,
+    app,
+    get_escalation_manager,
+    get_query,
+    get_service,
+    resolve_escalation,
+)
 from usurp.parser import parse_serp_html
+from usurp.service import BrowserChallengeError, RateLimitExceededError
 
 
 class FakeService:
@@ -108,3 +118,106 @@ async def test_metrics_endpoint_exposes_prometheus_payload() -> None:
         response = await ac.get("/metrics")
     assert response.status_code == 200
     assert "usurp_search_requests_total" in response.text
+
+
+@pytest.mark.asyncio
+async def test_query_dependency_and_service_factory() -> None:
+    assert await get_query() is None
+    query = await get_query(q="test", start=2, num=5)
+    assert query is not None
+    assert query.start == 2
+    assert get_service() is not None
+    assert get_escalation_manager() is not None
+
+
+@pytest.mark.asyncio
+async def test_admin_ui_rejects_bad_upload_and_missing_ticket(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    app.dependency_overrides[get_escalation_manager] = lambda: manager
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        bad_type = await ac.post(
+            "/admin/ui/resolve",
+            data={"api_key": "operator", "ticket_id": "missing"},
+            files={"html_file": ("input.txt", "data", "text/plain")},
+        )
+        missing = await ac.post(
+            "/admin/ui/resolve",
+            data={"api_key": "operator", "ticket_id": "missing"},
+            files={"html_file": ("input.html", "<html></html>", "text/html")},
+        )
+    assert bad_type.status_code == 400
+    assert missing.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_admin_ui_rejects_oversized_upload(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    app.dependency_overrides[get_escalation_manager] = lambda: manager
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post(
+            "/admin/ui/resolve",
+            data={"api_key": "operator", "ticket_id": "missing"},
+            files={"html_file": ("large.html", "x" * 5_000_001, "text/html")},
+        )
+    assert response.status_code == 413
+
+
+@pytest.mark.asyncio
+async def test_resolve_escalation_maps_missing_and_invalid_ticket(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    app.dependency_overrides[get_escalation_manager] = lambda: manager
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        missing = await ac.post(
+            "/admin/escalations/missing/resolve",
+            json={"rendered_html": "<html></html>"},
+        )
+        invalid = await ac.post(
+            "/admin/escalations/../resolve/resolve",
+            json={"rendered_html": "<html></html>"},
+        )
+    assert missing.status_code == 404
+    assert invalid.status_code in {400, 404}
+
+
+@pytest.mark.asyncio
+async def test_resolve_escalation_maps_manager_validation_error(tmp_path) -> None:
+    manager = EscalationManager(tmp_path)
+    with pytest.raises(HTTPException) as exc_info:
+        await resolve_escalation(
+            "../invalid",
+            EscalationSubmission(rendered_html="<html></html>"),
+            manager=manager,
+        )
+    assert exc_info.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_search_maps_rate_limit_and_runtime_errors() -> None:
+    class FailingService:
+        def __init__(self, error: Exception) -> None:
+            self.error = error
+
+        async def search(self, *args, **kwargs):
+            raise self.error
+
+    transport = ASGITransport(app=app)
+    app.dependency_overrides[get_service] = lambda: FailingService(
+        RateLimitExceededError("limited")
+    )
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        limited = await ac.get("/search", params={"q": "test"})
+    assert limited.status_code == 429
+
+    app.dependency_overrides[get_service] = lambda: FailingService(RuntimeError("down"))
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        unavailable = await ac.get("/search", params={"q": "test"})
+    assert unavailable.status_code == 503
+
+    app.dependency_overrides[get_service] = lambda: FailingService(
+        BrowserChallengeError(ChallengeType.JS_CHALLENGE, ticket_id="ticket")
+    )
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        challenged = await ac.get("/search", params={"q": "test"})
+    assert challenged.status_code == 503
+    assert challenged.json()["detail"]["ticket_id"] == "ticket"

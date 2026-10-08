@@ -35,7 +35,7 @@ jobs:
       - name: Run linters
         run: python -m ruff check . && python -m black --check .
       - name: Run unit tests with coverage
-        run: python -m pytest -m 'not integration' --cov=usurp --cov-report=term-missing --cov-fail-under=80 -q
+        run: python -m pytest -m 'not integration' --cov=usurp --cov-report=term-missing --cov-fail-under=100 -q
       - name: Run integration tests
         run: python -m pytest -m integration -q
       - name: Run type checks

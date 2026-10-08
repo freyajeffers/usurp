@@ -4,7 +4,7 @@ from secrets import compare_digest
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.requests import Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,6 +12,7 @@ from usurp.browser.camofox import CamofoxEscalator
 from usurp.browser.cdp import CdpEscalator
 from usurp.browser.chain import EscalationChain
 from usurp.escalation import EscalationManager
+from usurp.metrics import SEARCH_COUNTER, SEARCH_LATENCY, metrics_response
 from usurp.providers import GoogleProgrammableSearchProvider
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
 from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchService
@@ -140,6 +141,12 @@ async def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/metrics")
+async def metrics() -> Response:
+    payload, content_type = metrics_response()
+    return Response(content=payload, media_type=content_type)
+
+
 @app.get("/search")
 @app.get("/v1/search")
 async def search(
@@ -149,33 +156,35 @@ async def search(
     if query is None:
         raise HTTPException(status_code=400, detail="missing query parameters")
     authorize_api_key(query.api_key)
-    try:
-        response = await service.search(
-            TransportRequest(
-                query=query.q,
-                country_code=query.gl,
-                language_code=query.hl,
-                start_offset=query.start,
-                num_results=query.num,
-                device_type=query.device,
-            ),
-            no_cache=query.no_cache,
-            rate_limit_key=query.api_key or "anonymous",
-        )
-    except RateLimitExceededError as exc:
-        raise HTTPException(status_code=429, detail=str(exc)) from exc
-    except BrowserChallengeError as exc:
-        raise HTTPException(
-            status_code=503,
-            detail={
-                "error": "browser_challenge_unresolved",
-                "challenge_type": exc.challenge_type.value,
-                "ticket_id": exc.ticket_id,
-                "message": str(exc),
-            },
-        ) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    SEARCH_COUNTER.inc()
+    with SEARCH_LATENCY.time():
+        try:
+            response = await service.search(
+                TransportRequest(
+                    query=query.q,
+                    country_code=query.gl,
+                    language_code=query.hl,
+                    start_offset=query.start,
+                    num_results=query.num,
+                    device_type=query.device,
+                ),
+                no_cache=query.no_cache,
+                rate_limit_key=query.api_key or "anonymous",
+            )
+        except RateLimitExceededError as exc:
+            raise HTTPException(status_code=429, detail=str(exc)) from exc
+        except BrowserChallengeError as exc:
+            raise HTTPException(
+                status_code=503,
+                detail={
+                    "error": "browser_challenge_unresolved",
+                    "challenge_type": exc.challenge_type.value,
+                    "ticket_id": exc.ticket_id,
+                    "message": str(exc),
+                },
+            ) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
     return response.model_dump(mode="json")
 
 

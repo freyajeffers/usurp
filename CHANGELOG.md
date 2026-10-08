@@ -40,6 +40,7 @@ All notable changes to usurp are documented here.
 - Added authenticated escalation-admin endpoints to list pending tickets and submit human-reviewed rendered HTML.
 - Added a minimal authenticated browser UI at `/admin/ui` for listing tickets and uploading reviewed HTML.
 - Added an optional Chromium DevTools Protocol escalation stage between Camoufox and human-review tickets, enabled with `USURP_CDP_ENDPOINT`.
+- Added Prometheus instrumentation and an authenticated-independent `/metrics` endpoint for search latency, request volume, and escalator attempts.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

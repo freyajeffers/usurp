@@ -99,3 +99,12 @@ async def test_admin_ui_lists_and_resolves_ticket(tmp_path) -> None:
     assert "ticket-ui" in page.text
     assert resolved.status_code == 303
     assert manager.get_ticket("ticket-ui")["status"] == "resolved"
+
+
+@pytest.mark.asyncio
+async def test_metrics_endpoint_exposes_prometheus_payload() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.get("/metrics")
+    assert response.status_code == 200
+    assert "usurp_search_requests_total" in response.text

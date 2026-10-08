@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from usurp.browser import EscalationRequest, EscalationResult
+from usurp.metrics import ESCALATOR_ATTEMPTS
 
 
 class Escalator(Protocol):
@@ -21,6 +22,7 @@ class EscalationChain:
     async def execute(self, request: EscalationRequest) -> EscalationResult:
         last_result: EscalationResult | None = None
         for escalator in self._escalators:
+            ESCALATOR_ATTEMPTS.labels(escalator=escalator.__class__.__name__).inc()
             last_result = await escalator.execute(request)
             if last_result.resolved_successfully:
                 return last_result

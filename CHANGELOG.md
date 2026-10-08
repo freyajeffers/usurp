@@ -34,6 +34,7 @@ All notable changes to usurp are documented here.
 - Added local escalation tickets for authorized human-in-the-loop review and rendered-HTML submission without automated CAPTCHA bypass.
 - Added Camoufox as the primary browser escalator with Playwright fallback; Camoufox remains render-only and does not solve CAPTCHAs.
 - Added a disabled-by-default `SolverAdapter` protocol with a non-solving mock adapter for approved human/internal integrations.
+- Added an opt-in official Google Programmable Search fallback using `USURP_GOOGLE_CSE_API_KEY` and `USURP_GOOGLE_CSE_ID`; credentials are never logged.
 - Camoufox humanization, sticky proxy routing, cooldowns, and fail-closed challenge handling remain enabled as challenge-avoidance measures.
 - Verified Camoufox ARM64 browser installation and live rendering against `example.com`; Google challenge responses remain fail-closed.
 - Added authenticated escalation-admin endpoints to list pending tickets and submit human-reviewed rendered HTML.

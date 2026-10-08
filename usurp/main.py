@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from usurp.browser.camofox import CamofoxEscalator
 from usurp.escalation import EscalationManager
+from usurp.providers import GoogleProgrammableSearchProvider
 from usurp.rate_limit import RateLimitPolicy, TokenBucketRateLimiter
 from usurp.service import BrowserChallengeError, RateLimitExceededError, SearchService
 from usurp.transport import DeviceType, FastPathTransport, TransportRequest
@@ -73,6 +74,7 @@ def get_service() -> SearchService:
             )
         ),
         escalation_manager=_ESCALATION_MANAGER,
+        official_provider=GoogleProgrammableSearchProvider.from_environment(),
     )
 
 

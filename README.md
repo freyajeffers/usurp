@@ -47,7 +47,7 @@ uv sync --extra dev
 camoufox fetch
 ```
 
-The project pins Python 3.14.8 in `.python-version` and resolves the newest compatible runtime and development dependencies into `uv.lock`. On ARM64, Camoufox may require a native compiler toolchain for `indexed-zstd`; if Camoufox assets cannot be installed, the application falls back to Playwright.
+The project pins Python 3.14.8 in `.python-version` and resolves the newest compatible runtime and development dependencies into `uv.lock`. On ARM64, Camoufox may require a native compiler toolchain for `indexed-zstd`; if Camoufox assets cannot be installed, the application falls back to Playwright. Set `USURP_GOOGLE_CSE_API_KEY` and `USURP_GOOGLE_CSE_ID` to enable the optional official Google Programmable Search fallback when browser challenges remain unresolved.
 
 ### 2.2 Starting the Service
 

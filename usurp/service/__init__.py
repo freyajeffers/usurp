@@ -10,6 +10,7 @@ from usurp.browser import ChallengeType, EscalationRequest, EscalationResult
 from usurp.cache import SQLiteSerpCache
 from usurp.escalation import EscalationManager
 from usurp.parser import SerpApiResponse, parse_serp_html
+from usurp.providers import SearchProvider
 from usurp.transport import TransportRequest, TransportResult
 
 
@@ -50,11 +51,13 @@ class SearchService:
         escalator: BrowserEscalatorProtocol | None = None,
         rate_limiter: RateLimiterProtocol | None = None,
         escalation_manager: EscalationManager | None = None,
+        official_provider: SearchProvider | None = None,
     ) -> None:
         self._transport = transport
         self._escalator = escalator
         self._rate_limiter = rate_limiter
         self._escalation_manager = escalation_manager or EscalationManager()
+        self._official_provider = official_provider
         self._cache = cache_factory(cache_path) if cache_path is not None else None
 
     async def search(
@@ -86,6 +89,8 @@ class SearchService:
                 raise RuntimeError("transport requires browser escalation")
             escalation = await self._escalator.execute(self._build_escalation_request(request))
             if not escalation.resolved_successfully:
+                if self._official_provider is not None:
+                    return await self._official_provider.search(request)
                 # persist challenge for human-in-the-loop resolution
                 ticket_id = str(uuid4())
                 self._escalation_manager.create_ticket(

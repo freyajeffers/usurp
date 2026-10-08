@@ -135,3 +135,38 @@ async def test_search_service_rejects_unresolved_browser_challenge() -> None:
         await service.search(TransportRequest(query="captcha"))
     assert exc_info.value.challenge_type is ChallengeType.HARD_CAPTCHA
     assert exc_info.value.ticket_id is not None
+
+
+@pytest.mark.asyncio
+async def test_search_service_uses_official_provider_after_challenge() -> None:
+    class ChallengedTransport(FakeTransport):
+        async def fetch(self, request: TransportRequest) -> TransportResult:
+            return TransportResult(
+                status_code=429,
+                headers={},
+                raw_html="captcha",
+                response_time_ms=1.0,
+                escalation_required=True,
+            )
+
+    class FakeProvider:
+        async def search(self, request: TransportRequest):
+            return await SearchService(transport=FakeTransport()).search(request)
+
+    class UnresolvedEscalator:
+        async def execute(self, request):
+            return EscalationResult(
+                rendered_html="captcha",
+                final_url="https://www.google.com/sorry/index",
+                execution_duration_ms=100.0,
+                challenge_type_encountered=ChallengeType.HARD_CAPTCHA,
+                resolved_successfully=False,
+            )
+
+    response = await SearchService(
+        transport=ChallengedTransport(),
+        escalator=UnresolvedEscalator(),
+        official_provider=FakeProvider(),
+    ).search(TransportRequest(query="provider"))
+
+    assert response.organic_results[0].title == "Result"

@@ -38,6 +38,7 @@ All notable changes to usurp are documented here.
 - Camoufox humanization, sticky proxy routing, cooldowns, and fail-closed challenge handling remain enabled as challenge-avoidance measures.
 - Verified Camoufox ARM64 browser installation and live rendering against `example.com`; Google challenge responses remain fail-closed.
 - Added authenticated escalation-admin endpoints to list pending tickets and submit human-reviewed rendered HTML.
+- Added a minimal authenticated browser UI at `/admin/ui` for listing tickets and uploading reviewed HTML.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
 
 Not implemented yet: production validation against captured real Google layouts.

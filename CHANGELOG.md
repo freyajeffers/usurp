@@ -51,5 +51,6 @@ Initial consumption-ready release: transport, parser, cache, rate limiting, Camo
 - Closed SQLite cache connections explicitly with commit/rollback semantics to eliminate leaked-connection warnings.
 - Updated GitHub Actions dependencies to current releases: checkout v7.0.1, setup-python v7.0.0, cache v6.1.0, Docker QEMU/buildx/build-push v4.4.0/v4.4.1/v7.4.0, and upload-artifact v7.0.2.
 - Hardened escalation ticket IDs against path traversal and unsafe filesystem names.
+- Pinned CI runners to Ubuntu 24.04 to avoid the scheduled `ubuntu-latest` migration warning.
 
 Not implemented yet: production validation against captured real Google layouts.

@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "usurp"
-version = "0.0.0"
+version = "0.1.0"
 description = "Autonomous Google SERP Extraction Engine"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Freya Jeffers"}]
 dependencies = [
   "fastapi>=0.115,<1",

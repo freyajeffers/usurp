@@ -4,6 +4,10 @@ All notable changes to usurp are documented here.
 
 ## Unreleased
 
+## 0.1.0 - 2026-10-10
+
+Initial consumption-ready release: transport, parser, cache, rate limiting, Camoufox/CDP escalation, human review, metrics, Docker packaging, systemd packaging, and CI gates.
+
 - Added the initial `uv` Python package scaffold.
 - Added strict Phase 1 transport contracts for proxy nodes, requests, and results.
 - Added a minimal `/search` ASGI endpoint returning the SerpApi-compatible root keys used by the scaffold.

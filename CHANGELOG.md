@@ -4,6 +4,8 @@ All notable changes to usurp are documented here.
 
 ## Unreleased
 
+- Expanded Prometheus instrumentation with transport, cache, escalator latency, result-count, in-flight, error, timestamp, and payload-size metrics plus tested recording helpers.
+
 ## 0.1.0 - 2026-10-10
 
 Initial consumption-ready release: transport, parser, cache, rate limiting, Camoufox/CDP escalation, human review, metrics, Docker packaging, systemd packaging, and CI gates.

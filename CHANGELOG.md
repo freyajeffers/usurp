@@ -5,6 +5,7 @@ All notable changes to usurp are documented here.
 ## Unreleased
 
 - Expanded Prometheus instrumentation with transport, cache, escalator latency, result-count, in-flight, error, timestamp, and payload-size metrics plus tested recording helpers.
+- Made escalation fail-open between stages: CDP is now attempted when Camoufox raises an exception as well as when it returns an unresolved challenge.
 
 ## 0.1.0 - 2026-10-10
 

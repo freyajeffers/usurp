@@ -44,6 +44,37 @@ async def test_escalation_chain_moves_to_cdp_after_camofox_failure() -> None:
     assert calls == ["camofox", "cdp"]
 
 
+@pytest.mark.asyncio
+async def test_escalation_chain_continues_to_cdp_after_camofox_exception() -> None:
+    calls: list[str] = []
+
+    async def camofox_runner(_: EscalationRequest) -> EscalationResult:
+        calls.append("camofox")
+        raise RuntimeError("browser startup failed")
+
+    async def cdp_runner(_: EscalationRequest) -> EscalationResult:
+        calls.append("cdp")
+        return result(True)
+
+    response = await EscalationChain(
+        (CdpEscalator(runner=camofox_runner), CdpEscalator(runner=cdp_runner))
+    ).execute(request())
+
+    assert response.resolved_successfully is True
+    assert calls == ["camofox", "cdp"]
+
+
+@pytest.mark.asyncio
+async def test_escalation_chain_returns_unresolved_after_all_exceptions() -> None:
+    async def failing(_: EscalationRequest) -> EscalationResult:
+        raise RuntimeError("browser unavailable")
+
+    response = await EscalationChain((CdpEscalator(runner=failing),)).execute(request())
+
+    assert response.resolved_successfully is False
+    assert response.challenge_type_encountered is ChallengeType.JS_CHALLENGE
+
+
 def test_escalation_chain_requires_an_escalator() -> None:
     with pytest.raises(ValueError, match="at least one"):
         EscalationChain(())

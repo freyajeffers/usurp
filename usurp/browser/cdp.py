@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 from typing import Any, cast
 from urllib.parse import urlsplit
 
@@ -13,7 +14,7 @@ class CdpEscalator:
 
     def __init__(self, runner: Any | None = None, cdp_endpoint: str | None = None) -> None:
         self._runner = runner
-        self._cdp_endpoint = cdp_endpoint
+        self._cdp_endpoint = cdp_endpoint or self._detect_local_cdp_endpoint()
 
     async def execute(self, request: EscalationRequest) -> EscalationResult:
         if self._runner is not None:
@@ -60,6 +61,17 @@ class CdpEscalator:
             challenge_type_encountered=ChallengeType.JS_CHALLENGE,
             resolved_successfully=False,
         )
+
+    @staticmethod
+    def _detect_local_cdp_endpoint() -> str | None:
+        """Return the first reachable local Chromium CDP endpoint."""
+        for port in (9222, 9223, 9229):
+            try:
+                with socket.create_connection(("127.0.0.1", port), timeout=0.1):
+                    return f"http://127.0.0.1:{port}"
+            except OSError:
+                continue
+        return None
 
     @staticmethod
     def proxy_server(request: EscalationRequest) -> str | None:

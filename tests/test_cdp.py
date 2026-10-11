@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from usurp.browser import ChallengeType, EscalationRequest, EscalationResult
@@ -98,8 +100,21 @@ async def test_escalation_chain_returns_last_unresolved_result() -> None:
 
 
 def test_cdp_without_endpoint_is_unresolved_not_an_exception() -> None:
-    response = __import__("asyncio").run(CdpEscalator().execute(request()))
+    with patch.object(CdpEscalator, "_detect_local_cdp_endpoint", return_value=None):
+        response = __import__("asyncio").run(CdpEscalator().execute(request()))
     assert response.resolved_successfully is False
+
+
+def test_cdp_auto_detects_default_local_endpoint() -> None:
+    connection = MagicMock()
+    with patch("usurp.browser.cdp.socket.create_connection", side_effect=[OSError, connection]):
+        assert CdpEscalator._detect_local_cdp_endpoint() == "http://127.0.0.1:9223"
+    connection.__enter__.assert_called_once()
+
+
+def test_cdp_auto_detection_returns_none_when_ports_are_closed() -> None:
+    with patch("usurp.browser.cdp.socket.create_connection", side_effect=OSError):
+        assert CdpEscalator._detect_local_cdp_endpoint() is None
 
 
 def test_cdp_proxy_server_preserves_scheme_host_and_port() -> None:

@@ -6,6 +6,7 @@ All notable changes to usurp are documented here.
 
 - Expanded Prometheus instrumentation with transport, cache, escalator latency, result-count, in-flight, error, timestamp, and payload-size metrics plus tested recording helpers.
 - Made escalation fail-open between stages: CDP is now attempted when Camoufox raises an exception as well as when it returns an unresolved challenge.
+- Added automatic local Chromium CDP discovery on ports 9222, 9223, and 9229 when `USURP_CDP_ENDPOINT` is unset.
 
 ## 0.1.0 - 2026-10-10
 
